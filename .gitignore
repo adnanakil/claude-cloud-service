@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+*.log
+
+# Sessions
+sessions/
+/tmp/
+
+# iOS
+ios-app/ClaudeCloud/build/
+ios-app/ClaudeCloud/DerivedData/
+ios-app/ClaudeCloud/*.xcuserstate
+ios-app/ClaudeCloud/xcuserdata/

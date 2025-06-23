@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import sessionRouter from './routes/sessions.js';
 import debugRouter from './routes/debug.js';
 import { SessionManager } from './services/sessionManager.js';
+import { MockSessionManager } from './services/mockSessionManager.js';
 import { WebSocketHandler } from './services/websocketHandler.js';
 
 dotenv.config();
@@ -14,8 +15,14 @@ const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
-const sessionManager = new SessionManager();
+// Use mock session manager if Claude is not available
+const useMock = process.env.USE_MOCK === 'true' || process.env.NODE_ENV === 'development';
+const sessionManager = useMock ? new MockSessionManager() : new SessionManager();
 const wsHandler = new WebSocketHandler(sessionManager);
+
+if (useMock) {
+  console.log('Running in MOCK mode - Claude CLI not required');
+}
 
 app.use(cors());
 app.use(express.json());

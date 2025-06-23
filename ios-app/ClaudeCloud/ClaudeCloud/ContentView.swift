@@ -142,8 +142,12 @@ class TerminalManager: ObservableObject {
     }
     
     private func handleMessage(_ text: String) {
+        print("Received WebSocket message: \(text)")
         guard let data = text.data(using: .utf8),
-              let message = try? JSONDecoder().decode(WebSocketMessage.self, from: data) else { return }
+              let message = try? JSONDecoder().decode(WebSocketMessage.self, from: data) else { 
+            print("Failed to decode message")
+            return 
+        }
         
         DispatchQueue.main.async {
             switch message.type {
@@ -155,7 +159,7 @@ class TerminalManager: ObservableObject {
                 self.output += "\nSession ended\n"
                 self.isConnected = false
             default:
-                break
+                print("Unknown message type: \(message.type)")
             }
         }
     }
@@ -165,9 +169,16 @@ class TerminalManager: ObservableObject {
         guard let data = try? JSONEncoder().encode(message),
               let string = String(data: data, encoding: .utf8) else { return }
         
+        print("Sending command: \(string)")
+        
         webSocketTask?.send(.string(string)) { error in
             if let error = error {
                 print("Send error: \(error)")
+                DispatchQueue.main.async {
+                    self.output += "\nError sending command: \(error.localizedDescription)\n"
+                }
+            } else {
+                print("Command sent successfully")
             }
         }
         

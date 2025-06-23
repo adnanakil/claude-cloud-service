@@ -1,3 +1,10 @@
+//
+//  ClaudeCloudApp.swift
+//  ClaudeCloud
+//
+//  Created by Adnan Akil on 6/23/25.
+//
+
 import SwiftUI
 
 @main

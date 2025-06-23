@@ -1,5 +1,69 @@
+import SwiftUI
 import Foundation
 import Combine
+
+@main
+struct ClaudeCloudApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
+
+struct ContentView: View {
+    @StateObject private var terminalManager = TerminalManager()
+    @State private var inputCommand = ""
+    @FocusState private var isInputFocused: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Terminal output
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Text(terminalManager.output)
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.green)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .id("bottom")
+                }
+                .background(Color.black)
+                .onChange(of: terminalManager.output) { _ in
+                    withAnimation {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
+            }
+            
+            // Input field
+            HStack {
+                TextField("Enter command", text: $inputCommand)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .focused($isInputFocused)
+                    .onSubmit {
+                        sendCommand()
+                    }
+                
+                Button(action: sendCommand) {
+                    Image(systemName: "paperplane.fill")
+                }
+                .disabled(inputCommand.isEmpty || !terminalManager.isConnected)
+            }
+            .padding()
+        }
+        .onAppear {
+            terminalManager.connect()
+            isInputFocused = true
+        }
+    }
+    
+    private func sendCommand() {
+        guard !inputCommand.isEmpty else { return }
+        terminalManager.sendCommand(inputCommand)
+        inputCommand = ""
+    }
+}
 
 class TerminalManager: ObservableObject {
     @Published var output = ""
@@ -11,8 +75,14 @@ class TerminalManager: ObservableObject {
     private let wsBaseURL = "wss://claude-text-production.up.railway.app"
     
     func connect() {
+        output = "Connecting to Claude Cloud...\n"
         createSession { [weak self] sessionId in
-            guard let self = self, let sessionId = sessionId else { return }
+            guard let self = self, let sessionId = sessionId else {
+                DispatchQueue.main.async {
+                    self?.output += "Failed to create session\n"
+                }
+                return
+            }
             self.sessionId = sessionId
             self.connectWebSocket(sessionId: sessionId)
         }
@@ -67,6 +137,7 @@ class TerminalManager: ObservableObject {
                 print("WebSocket error: \(error)")
                 DispatchQueue.main.async {
                     self?.isConnected = false
+                    self?.output += "\nDisconnected from server\n"
                 }
             }
         }
@@ -81,9 +152,9 @@ class TerminalManager: ObservableObject {
             case "output":
                 self.output += message.data ?? ""
             case "connected":
-                self.output += "Connected to Claude Code session\\n"
+                self.output += "Connected to Claude Code session\n"
             case "exit":
-                self.output += "\\nSession ended\\n"
+                self.output += "\nSession ended\n"
                 self.isConnected = false
             default:
                 break
@@ -103,7 +174,7 @@ class TerminalManager: ObservableObject {
         }
         
         DispatchQueue.main.async {
-            self.output += "> \(command)\\n"
+            self.output += "> \(command)\n"
         }
     }
 }

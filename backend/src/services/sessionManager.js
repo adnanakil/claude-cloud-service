@@ -38,7 +38,21 @@ export class SessionManager extends EventEmitter {
       HOME: sessionDir
     };
     
-    const pty = spawn('claude', ['--no-update-check'], {
+    // Try different possible paths for claude
+    const claudePaths = ['/usr/local/bin/claude', '/usr/bin/claude', 'claude'];
+    let claudeCommand = 'claude';
+    
+    for (const path of claudePaths) {
+      try {
+        await fs.access(path);
+        claudeCommand = path;
+        break;
+      } catch (e) {
+        // Continue to next path
+      }
+    }
+    
+    const pty = spawn(claudeCommand, ['--no-update-check'], {
       name: 'xterm-color',
       cols: 80,
       rows: 30,

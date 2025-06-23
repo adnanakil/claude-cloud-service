@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code CLI
+# Install Claude Code CLI as root
 RUN curl -fsSL https://github.com/anthropics/claude-code/releases/latest/download/install.sh | bash
+RUN cp /root/.local/bin/claude /usr/local/bin/claude || cp /usr/local/bin/claude /usr/bin/claude || true
+RUN chmod +x /usr/local/bin/claude || chmod +x /usr/bin/claude || true
 
 WORKDIR /app
 

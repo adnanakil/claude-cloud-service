@@ -7,8 +7,8 @@ class TerminalManager: ObservableObject {
     
     private var webSocketTask: URLSessionWebSocketTask?
     private var sessionId: String?
-    private let baseURL = "http://localhost:3000"
-    private let wsBaseURL = "ws://localhost:3000"
+    private let baseURL = "https://claude-text-production.up.railway.app"
+    private let wsBaseURL = "wss://claude-text-production.up.railway.app"
     
     func connect() {
         createSession { [weak self] sessionId in

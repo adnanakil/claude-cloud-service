@@ -26,6 +26,7 @@ export class ClaudeSessionManager extends EventEmitter {
     
     try {
       await fs.mkdir(sessionDir, { recursive: true });
+      console.log(`Created session directory: ${sessionDir}`);
     } catch (error) {
       console.error('Failed to create session directory:', error);
     }
@@ -35,13 +36,39 @@ export class ClaudeSessionManager extends EventEmitter {
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
       HOME: sessionDir,
       TERM: 'dumb',
-      NO_COLOR: '1'
+      NO_COLOR: '1',
+      PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin'
     };
     
-    console.log(`Starting Claude session in ${sessionDir}`);
-    console.log(`Environment: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
+    console.log('=== Starting Claude Session ===');
+    console.log(`Session ID: ${sessionId}`);
+    console.log(`Session Dir: ${sessionDir}`);
+    console.log(`Environment PATH: ${env.PATH}`);
+    console.log(`ANTHROPIC_API_KEY: ${env.ANTHROPIC_API_KEY ? 'SET (' + env.ANTHROPIC_API_KEY.substring(0, 10) + '...)' : 'NOT SET'}`);
+    console.log(`Command: claude --no-update-check ${sessionDir}`);
+    
+    // First check if claude exists
+    const { execSync } = require('child_process');
+    try {
+      const claudePath = execSync('which claude', { encoding: 'utf8' }).trim();
+      console.log(`Claude found at: ${claudePath}`);
+      
+      // Check if it's executable
+      const stats = await fs.stat(claudePath);
+      console.log(`Claude executable: ${stats.mode & 0o111 ? 'YES' : 'NO'}`);
+    } catch (e) {
+      console.error('Claude not found in PATH!');
+      console.log('Checking npm global packages...');
+      try {
+        const npmList = execSync('npm list -g --depth=0', { encoding: 'utf8' });
+        console.log('Global npm packages:', npmList);
+      } catch (npmError) {
+        console.error('Failed to list npm packages:', npmError.message);
+      }
+    }
     
     // Use spawn without PTY
+    console.log('Spawning Claude process...');
     const claudeProcess = spawn('claude', ['--no-update-check', sessionDir], {
       cwd: sessionDir,
       env: env,

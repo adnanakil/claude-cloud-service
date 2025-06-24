@@ -40,11 +40,18 @@ export class SessionManager extends EventEmitter {
     
     // Use the claude command
     const claudeCommand = 'claude';
+    
+    // Check if project directory exists, use it as the starting directory
+    const projectDir = process.env.PROJECTS_DIR ? 
+      path.join(process.env.PROJECTS_DIR, 'claude-cloud-service') : null;
+    const startDir = projectDir && require('fs').existsSync(projectDir) ? 
+      projectDir : sessionDir;
+    
     const args = [
-      sessionDir // Pass the session directory to Claude
+      startDir // Start Claude in project directory if available
     ];
     
-    console.log(`Starting Claude session in ${sessionDir}`);
+    console.log(`Starting Claude session in ${startDir}`);
     console.log(`Environment: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
     
     let pty;

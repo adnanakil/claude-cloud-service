@@ -8,6 +8,7 @@ import debugRouter from './routes/debug.js';
 import { SessionManager } from './services/sessionManager.js';
 import { MockSessionManager } from './services/mockSessionManager.js';
 import { ClaudeSessionManager } from './services/claudeSessionManager.js';
+import { ClaudeApiManager } from './services/claudeApiManager.js';
 import { WebSocketHandler } from './services/websocketHandler.js';
 
 dotenv.config();
@@ -20,7 +21,7 @@ const wss = new WebSocketServer({
 });
 
 // Use different session managers based on environment
-const sessionType = process.env.SESSION_TYPE || 'claude'; // 'claude', 'mock', or 'pty'
+const sessionType = process.env.SESSION_TYPE || 'api'; // 'api', 'claude', 'mock', or 'pty'
 let sessionManager;
 
 switch (sessionType) {
@@ -33,9 +34,13 @@ switch (sessionType) {
     console.log('Running with PTY-based Claude CLI');
     break;
   case 'claude':
-  default:
     sessionManager = new ClaudeSessionManager();
     console.log('Running with subprocess-based Claude CLI');
+    break;
+  case 'api':
+  default:
+    sessionManager = new ClaudeApiManager();
+    console.log('Running with API-based Claude manager');
     break;
 }
 

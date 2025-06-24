@@ -120,11 +120,10 @@ export class ClaudeApiManager extends EventEmitter {
       console.log(`Working directory: ${session.cwd}`);
       console.log(`Environment vars: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
       
-      // Use claude --print for non-interactive mode
-      const args = ['--print', command];
-      console.log(`Full command: claude ${args.join(' ')}`);
+      // Use echo to pipe the command to claude --print
+      console.log(`Piping command to Claude: echo "${command}" | claude --print`);
       
-      const claudeProcess = spawn('claude', args, {
+      const claudeProcess = spawn('sh', ['-c', `echo "${command.replace(/"/g, '\\"')}" | claude --print`], {
         cwd: session.cwd,
         env: env,
         stdio: ['pipe', 'pipe', 'pipe']

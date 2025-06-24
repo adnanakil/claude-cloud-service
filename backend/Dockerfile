@@ -46,8 +46,22 @@ USER claude-user
 ENV SESSIONS_DIR=/app/sessions
 ENV PATH="/usr/local/bin:${PATH}"
 
+# Copy test script
+COPY test-claude-auth.js /app/
+
 # Expose port
 EXPOSE 3000
 
+# Create startup script that tests Claude first
+RUN echo '#!/bin/sh\n\
+echo "=== Container Starting ==="\n\
+echo "User: $(whoami)"\n\
+echo "PATH: $PATH"\n\
+echo "ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+SET}"\n\
+echo "Testing Claude..."\n\
+claude --version || echo "Claude version failed"\n\
+echo "Starting application..."\n\
+exec npm start' > /app/start.sh && chmod +x /app/start.sh
+
 # Start the application
-CMD ["npm", "start"]
+CMD ["/app/start.sh"]

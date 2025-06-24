@@ -7,6 +7,7 @@ import sessionRouter from './routes/sessions.js';
 import debugRouter from './routes/debug.js';
 import { SessionManager } from './services/sessionManager.js';
 import { MockSessionManager } from './services/mockSessionManager.js';
+import { ClaudeSessionManager } from './services/claudeSessionManager.js';
 import { WebSocketHandler } from './services/websocketHandler.js';
 
 dotenv.config();
@@ -18,17 +19,27 @@ const wss = new WebSocketServer({
   path: '/ws'
 });
 
-// Use mock session manager if Claude is not available
-// Make sure USE_MOCK is set to 'true' in Railway environment variables
-const useMock = process.env.USE_MOCK === 'true';
-const sessionManager = useMock ? new MockSessionManager() : new SessionManager();
-const wsHandler = new WebSocketHandler(sessionManager);
+// Use different session managers based on environment
+const sessionType = process.env.SESSION_TYPE || 'claude'; // 'claude', 'mock', or 'pty'
+let sessionManager;
 
-if (useMock) {
-  console.log('Running in MOCK mode - Claude CLI not required');
-} else {
-  console.log('Running with real Claude CLI');
+switch (sessionType) {
+  case 'mock':
+    sessionManager = new MockSessionManager();
+    console.log('Running in MOCK mode');
+    break;
+  case 'pty':
+    sessionManager = new SessionManager();
+    console.log('Running with PTY-based Claude CLI');
+    break;
+  case 'claude':
+  default:
+    sessionManager = new ClaudeSessionManager();
+    console.log('Running with subprocess-based Claude CLI');
+    break;
 }
+
+const wsHandler = new WebSocketHandler(sessionManager);
 
 app.use(cors());
 app.use(express.json());

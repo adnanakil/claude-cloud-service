@@ -96,13 +96,28 @@ class TerminalManager: ObservableObject {
         let body = ["userId": "ios-user"]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data = data,
-                  let response = try? JSONDecoder().decode(SessionResponse.self, from: data) else {
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Session creation error: \(error)")
                 completion(nil)
                 return
             }
-            completion(response.id)
+            
+            guard let data = data else {
+                print("No data received from session creation")
+                completion(nil)
+                return
+            }
+            
+            do {
+                let sessionResponse = try JSONDecoder().decode(SessionResponse.self, from: data)
+                print("Session created successfully: \(sessionResponse.id)")
+                completion(sessionResponse.id)
+            } catch {
+                print("Failed to decode session response: \(error)")
+                print("Raw response: \(String(data: data, encoding: .utf8) ?? "nil")")
+                completion(nil)
+            }
         }.resume()
     }
     

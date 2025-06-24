@@ -19,6 +19,7 @@ const wss = new WebSocketServer({
 });
 
 // Use mock session manager if Claude is not available
+// Make sure USE_MOCK is set to 'true' in Railway environment variables
 const useMock = process.env.USE_MOCK === 'true';
 const sessionManager = useMock ? new MockSessionManager() : new SessionManager();
 const wsHandler = new WebSocketHandler(sessionManager);

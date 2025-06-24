@@ -17,11 +17,13 @@ export class WebSocketHandler {
     const session = this.sessionManager.getSession(sessionId);
     if (!session) {
       console.log('Session not found:', sessionId);
+      console.log('Available sessions:', this.sessionManager.getAllSessions().map(s => s.id));
       ws.close(1008, 'Session not found');
       return;
     }
 
     console.log('WebSocket connected for session:', sessionId);
+    console.log('Session details:', { id: session.id, userId: session.userId });
     this.connections.set(sessionId, ws);
 
     ws.on('message', async (message) => {
@@ -69,10 +71,16 @@ export class WebSocketHandler {
       this.sessionManager.removeListener('exit', exitListener);
     });
 
-    ws.send(JSON.stringify({
-      type: 'connected',
-      sessionId
-    }));
+    // Send initial connection message
+    try {
+      ws.send(JSON.stringify({
+        type: 'connected',
+        sessionId
+      }));
+      console.log('Sent connected message to client');
+    } catch (error) {
+      console.error('Failed to send connected message:', error);
+    }
   }
 
   async handleMessage(sessionId, data, ws) {

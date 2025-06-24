@@ -109,13 +109,26 @@ export class SessionManager extends EventEmitter {
       output: []
     };
 
+    // Flag to track if theme has been selected
+    let themeSelected = false;
+    
     pty.on('data', (data) => {
+      const output = data.toString();
       session.output.push({
         type: 'output',
-        data: data.toString(),
+        data: output,
         timestamp: new Date()
       });
-      this.emit('output', sessionId, data.toString());
+      this.emit('output', sessionId, output);
+      
+      // Auto-select theme 1 (Dark mode) on first prompt
+      if (!themeSelected && output.includes('Choose the text style')) {
+        setTimeout(() => {
+          console.log('Auto-selecting theme 1 (Dark mode)');
+          pty.write('1\n');
+          themeSelected = true;
+        }, 500);
+      }
     });
 
     pty.on('exit', (code) => {

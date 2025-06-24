@@ -59,7 +59,8 @@ COPY test-claude-auth.js /app/
 # Expose port
 EXPOSE 3000
 
-# Create startup script that clones repo and tests Claude
+# Create startup script as root
+USER root
 RUN echo '#!/bin/sh\n\
 echo "=== Container Starting ==="\n\
 echo "User: $(whoami)"\n\
@@ -76,12 +77,15 @@ else\n\
     echo "Cloning repository..."\n\
     cd /app/projects\n\
     git clone https://github.com/adnanakil/claude-cloud-service.git || echo "Git clone failed"\n\
+    # Set ownership after cloning\n\
+    chown -R claude-user:claude-user "$REPO_DIR" || echo "Chown failed"\n\
 fi\n\
 \n\
 echo "Testing Claude..."\n\
 claude --version || echo "Claude version failed"\n\
 echo "Starting application..."\n\
-exec npm start' > /app/start.sh && chmod +x /app/start.sh
+cd /app\n\
+exec su claude-user -c "npm start"' > /app/start.sh && chmod +x /app/start.sh
 
-# Start the application
+# Start the application as root (script will switch to claude-user)
 CMD ["/app/start.sh"]

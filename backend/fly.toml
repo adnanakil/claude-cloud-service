@@ -12,6 +12,7 @@ primary_region = "iad"
   SESSIONS_DIR = "/app/sessions"
   PROJECTS_DIR = "/app/projects"
   NODE_ENV = "production"
+  USE_PTY = "false"
 
 [http_service]
   internal_port = 3000
@@ -71,3 +72,6 @@ primary_region = "iad"
 [experimental]
   enable_consul = true
   enable_etcd = true
+  # Enable proper init system for PTY support
+  cmd = ["dumb-init", "--"]
+  entrypoint = ["sh", "-c"]

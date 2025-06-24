@@ -10,7 +10,13 @@ RUN apt-get update && apt-get install -y \
     wget \
     ca-certificates \
     build-essential \
+    libutil-linux \
+    dumb-init \
     && rm -rf /var/lib/apt/lists/*
+
+# Ensure PTY support
+RUN mkdir -p /dev/pts && \
+    mount -t devpts devpts /dev/pts || true
 
 # Create a non-root user first
 RUN useradd -m -s /bin/bash claude-user
@@ -93,5 +99,6 @@ cd /app\n\
 # Pass environment variables explicitly to su\n\
 exec su claude-user -c "ANTHROPIC_API_KEY=\"${ANTHROPIC_API_KEY}\" JWT_SECRET=\"${JWT_SECRET}\" npm start"' > /app/start.sh && chmod +x /app/start.sh
 
-# Start the application as root (script will switch to claude-user)
+# Start the application with dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["/app/start.sh"]

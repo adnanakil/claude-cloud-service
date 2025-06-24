@@ -9,6 +9,7 @@ import { SessionManager } from './services/sessionManager.js';
 import { MockSessionManager } from './services/mockSessionManager.js';
 import { ClaudeSessionManager } from './services/claudeSessionManager.js';
 import { ClaudeApiManager } from './services/claudeApiManager.js';
+import { FlySessionManager } from './services/flySessionManager.js';
 import { WebSocketHandler } from './services/websocketHandler.js';
 
 dotenv.config();
@@ -29,8 +30,14 @@ switch (sessionType) {
     console.log('Running in MOCK mode');
     break;
   case 'pty':
-    sessionManager = new SessionManager();
-    console.log('Running with PTY-based Claude CLI');
+    // Use FlySessionManager on Fly.io for better PTY handling
+    if (process.env.FLY_APP_NAME) {
+      sessionManager = new FlySessionManager();
+      console.log('Running with Fly-optimized session manager');
+    } else {
+      sessionManager = new SessionManager();
+      console.log('Running with PTY-based Claude CLI');
+    }
     break;
   case 'claude':
     sessionManager = new ClaudeSessionManager();

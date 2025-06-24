@@ -14,14 +14,11 @@ RUN apt-get update && apt-get install -y \
 # Create a non-root user first
 RUN useradd -m -s /bin/bash claude-user
 
-# For now, we'll use a placeholder for Claude CLI
-# In production, you would download the actual Claude binary
-RUN mkdir -p /usr/local/bin && \
-    echo '#!/bin/bash' > /usr/local/bin/claude && \
-    echo 'echo "Claude CLI placeholder - please install actual Claude CLI"' >> /usr/local/bin/claude && \
-    echo 'echo "Visit: https://github.com/anthropics/claude-code"' >> /usr/local/bin/claude && \
-    echo 'exit 1' >> /usr/local/bin/claude && \
-    chmod 755 /usr/local/bin/claude
+# Install Claude CLI globally via npm
+RUN npm install -g @anthropic-ai/claude-code
+
+# Verify installation
+RUN which claude && claude --version || echo "Claude CLI installed"
 
 WORKDIR /app
 

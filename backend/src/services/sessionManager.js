@@ -38,14 +38,15 @@ export class SessionManager extends EventEmitter {
       HOME: sessionDir
     };
     
-    // Use the claude command with the current directory mounted
-    const claudeCommand = '/usr/local/bin/claude';
+    // Use the claude command
+    const claudeCommand = 'claude';
     const args = [
       '--no-update-check',
-      process.cwd() // Pass the current working directory to Claude
+      sessionDir // Pass the session directory to Claude
     ];
     
-    console.log(`Starting Claude session in ${sessionDir} with cwd: ${process.cwd()}`);
+    console.log(`Starting Claude session in ${sessionDir}`);
+    console.log(`Environment: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
     
     const pty = spawn(claudeCommand, args, {
       name: 'xterm-color',
@@ -53,6 +54,12 @@ export class SessionManager extends EventEmitter {
       rows: 30,
       cwd: sessionDir,
       env: env
+    });
+    
+    // Add error handling
+    pty.on('error', (error) => {
+      console.error('Failed to spawn Claude:', error);
+      this.emit('output', sessionId, `Error: Failed to start Claude CLI - ${error.message}\n`);
     });
 
     const session = {

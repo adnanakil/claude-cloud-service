@@ -115,9 +115,14 @@ export class ClaudeApiManager extends EventEmitter {
       };
       
       console.log(`Executing Claude with command: ${command}`);
+      console.log(`Working directory: ${session.cwd}`);
+      console.log(`Environment vars: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
       
       // Use claude --print for non-interactive mode
-      const claudeProcess = spawn('claude', ['--print', command], {
+      const args = ['--print', command];
+      console.log(`Full command: claude ${args.join(' ')}`);
+      
+      const claudeProcess = spawn('claude', args, {
         cwd: session.cwd,
         env: env,
         stdio: ['pipe', 'pipe', 'pipe']
@@ -137,6 +142,10 @@ export class ClaudeApiManager extends EventEmitter {
       });
       
       claudeProcess.on('exit', (code) => {
+        console.log(`Claude process exited with code: ${code}`);
+        console.log(`Total output length: ${output.length}`);
+        console.log(`Error output: ${errorOutput}`);
+        
         if (code !== 0 && errorOutput) {
           console.error('Claude error output:', errorOutput);
           this.emit('output', sessionId, `Error: ${errorOutput}\n`);

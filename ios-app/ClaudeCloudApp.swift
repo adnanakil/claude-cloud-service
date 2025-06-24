@@ -71,8 +71,8 @@ class TerminalManager: ObservableObject {
     
     private var webSocketTask: URLSessionWebSocketTask?
     private var sessionId: String?
-    private let baseURL = "https://claude-text-production.up.railway.app"
-    private let wsBaseURL = "wss://claude-text-production.up.railway.app"
+    private let baseURL = "https://claude-cloud-service.fly.dev"
+    private let wsBaseURL = "wss://claude-cloud-service.fly.dev"
     
     func connect() {
         output = "Connecting to Claude Cloud...\n"

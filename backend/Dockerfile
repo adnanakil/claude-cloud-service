@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-# Install dependencies for node-pty
+# Install dependencies for node-pty and other build tools
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     ca-certificates \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user first

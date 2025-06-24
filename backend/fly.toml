@@ -1,0 +1,72 @@
+# fly.toml configuration for Claude Cloud Service
+
+app = "claude-cloud-service"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3000"
+  SESSION_TYPE = "pty"
+  SESSIONS_DIR = "/app/sessions"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[services]]
+  internal_port = 3000
+  processes = ["app"]
+  protocol = "tcp"
+  script_checks = []
+  
+  [[services.http_checks]]
+    interval = "30s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/api/health"
+    protocol = "http"
+    timeout = "2s"
+    tls_skip_verify = false
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[processes]
+  app = "npm start"
+
+[experimental]
+  enable_consul = true
+  enable_etcd = true

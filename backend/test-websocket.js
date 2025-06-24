@@ -3,7 +3,7 @@
 import WebSocket from 'ws';
 import fetch from 'node-fetch';
 
-const BASE_URL = 'https://claude-text-production.up.railway.app';
+const BASE_URL = 'https://claude-cloud-service.fly.dev';
 
 async function testWebSocketConnection() {
   console.log('1. Creating session...');
@@ -20,7 +20,7 @@ async function testWebSocketConnection() {
   
   // Test WebSocket connection
   console.log('\n2. Connecting to WebSocket...');
-  const wsUrl = `wss://claude-text-production.up.railway.app/ws/${session.id}`;
+  const wsUrl = `wss://claude-cloud-service.fly.dev/ws/${session.id}`;
   console.log('WebSocket URL:', wsUrl);
   
   const ws = new WebSocket(wsUrl);
@@ -71,7 +71,7 @@ async function testWebSocketConnection() {
 // Also test the echo endpoint
 async function testEchoWebSocket() {
   console.log('\n\nTesting Echo WebSocket...');
-  const ws = new WebSocket('wss://claude-text-production.up.railway.app/ws/echo');
+  const ws = new WebSocket('wss://claude-cloud-service.fly.dev/ws/echo');
   
   ws.on('open', () => {
     console.log('Echo WebSocket connected!');

@@ -107,15 +107,36 @@ class TerminalManager: ObservableObject {
     }
     
     private func connectWebSocket(sessionId: String) {
-        guard let url = URL(string: "\(wsBaseURL)/ws/\(sessionId)") else { return }
+        let wsURL = "\(wsBaseURL)/ws/\(sessionId)"
+        print("Attempting to connect to WebSocket URL: \(wsURL)")
         
-        webSocketTask = URLSession.shared.webSocketTask(with: url)
-        webSocketTask?.resume()
-        
-        DispatchQueue.main.async {
-            self.isConnected = true
+        guard let url = URL(string: wsURL) else {
+            print("Failed to create WebSocket URL")
+            return
         }
         
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        
+        webSocketTask = URLSession.shared.webSocketTask(with: request)
+        
+        // Send initial ping to test connection
+        webSocketTask?.sendPing { error in
+            if let error = error {
+                print("WebSocket ping failed: \(error)")
+                DispatchQueue.main.async {
+                    self.output += "\nFailed to connect: \(error.localizedDescription)\n"
+                    self.isConnected = false
+                }
+            } else {
+                print("WebSocket ping successful")
+                DispatchQueue.main.async {
+                    self.isConnected = true
+                }
+            }
+        }
+        
+        webSocketTask?.resume()
         receiveMessage()
     }
     

@@ -13,7 +13,10 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+  noServer: true,
+  path: '/ws'
+});
 
 // Use mock session manager if Claude is not available
 const useMock = process.env.USE_MOCK === 'true';
@@ -36,7 +39,30 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// WebSocket test endpoint
+app.get('/api/ws-test', (req, res) => {
+  res.json({ 
+    websocketUrl: `wss://${req.get('host')}/ws/test`,
+    message: 'Use this URL to test WebSocket connection'
+  });
+});
+
+// Handle WebSocket upgrade manually for better Railway compatibility
+server.on('upgrade', (request, socket, head) => {
+  console.log('WebSocket upgrade request for:', request.url);
+  
+  // Only handle WebSocket requests that start with /ws/
+  if (request.url.startsWith('/ws/')) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
+
 wss.on('connection', (ws, req) => {
+  console.log('WebSocket connection established');
   wsHandler.handleConnection(ws, req);
 });
 

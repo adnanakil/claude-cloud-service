@@ -67,6 +67,11 @@ echo "User: $(whoami)"\n\
 echo "PATH: $PATH"\n\
 echo "ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+SET}"\n\
 \n\
+# Export environment variables for child processes\n\
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"\n\
+export JWT_SECRET="${JWT_SECRET}"\n\
+export PATH="${PATH}"\n\
+\n\
 # Clone or update the repository\n\
 REPO_DIR="/app/projects/claude-cloud-service"\n\
 if [ -d "$REPO_DIR" ]; then\n\
@@ -82,10 +87,11 @@ else\n\
 fi\n\
 \n\
 echo "Testing Claude..."\n\
-claude --version || echo "Claude version failed"\n\
+ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" claude --version || echo "Claude version failed"\n\
 echo "Starting application..."\n\
 cd /app\n\
-exec su claude-user -c "npm start"' > /app/start.sh && chmod +x /app/start.sh
+# Pass environment variables explicitly to su\n\
+exec su claude-user -c "ANTHROPIC_API_KEY=\"${ANTHROPIC_API_KEY}\" JWT_SECRET=\"${JWT_SECRET}\" npm start"' > /app/start.sh && chmod +x /app/start.sh
 
 # Start the application as root (script will switch to claude-user)
 CMD ["/app/start.sh"]

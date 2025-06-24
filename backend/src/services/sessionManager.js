@@ -41,7 +41,6 @@ export class SessionManager extends EventEmitter {
     // Use the claude command
     const claudeCommand = 'claude';
     const args = [
-      '--no-update-check',
       sessionDir // Pass the session directory to Claude
     ];
     

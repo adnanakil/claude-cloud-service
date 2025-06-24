@@ -22,14 +22,16 @@ struct ContentView: View {
                     Text(terminalManager.output)
                         .font(.system(.body, design: .monospaced))
                         .foregroundColor(.green)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
                         .padding()
                         .id("bottom")
                 }
                 .background(Color.black)
                 .onChange(of: terminalManager.output) { _ in
-                    withAnimation {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
             }

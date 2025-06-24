@@ -45,7 +45,7 @@ export class ClaudeSessionManager extends EventEmitter {
     console.log(`Session Dir: ${sessionDir}`);
     console.log(`Environment PATH: ${env.PATH}`);
     console.log(`ANTHROPIC_API_KEY: ${env.ANTHROPIC_API_KEY ? 'SET (' + env.ANTHROPIC_API_KEY.substring(0, 10) + '...)' : 'NOT SET'}`);
-    console.log(`Command: claude --no-update-check ${sessionDir}`);
+    console.log(`Command: claude ${sessionDir}`);
     
     // First check if claude exists
     const { execSync } = require('child_process');
@@ -69,7 +69,7 @@ export class ClaudeSessionManager extends EventEmitter {
     
     // Use spawn without PTY
     console.log('Spawning Claude process...');
-    const claudeProcess = spawn('claude', ['--no-update-check', sessionDir], {
+    const claudeProcess = spawn('claude', [sessionDir], {
       cwd: sessionDir,
       env: env,
       stdio: ['pipe', 'pipe', 'pipe']

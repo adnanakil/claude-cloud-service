@@ -28,14 +28,23 @@ async function testWebSocketConnection() {
   ws.on('open', () => {
     console.log('WebSocket connected!');
     
-    // Send a test command
+    // Send test commands
     setTimeout(() => {
-      console.log('\n3. Sending test command...');
+      console.log('\n3. Sending help command...');
       ws.send(JSON.stringify({
         type: 'command',
         command: 'help'
       }));
     }, 1000);
+    
+    // Send a Claude question
+    setTimeout(() => {
+      console.log('\n4. Sending Claude question...');
+      ws.send(JSON.stringify({
+        type: 'command',
+        command: 'What is 2+2?'
+      }));
+    }, 3000);
   });
   
   ws.on('message', (data) => {
@@ -53,10 +62,10 @@ async function testWebSocketConnection() {
   
   // Keep the script running
   setTimeout(() => {
-    console.log('\n4. Closing connection...');
+    console.log('\n5. Closing connection...');
     ws.close();
     process.exit(0);
-  }, 10000);
+  }, 15000);
 }
 
 // Also test the echo endpoint

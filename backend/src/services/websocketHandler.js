@@ -6,19 +6,31 @@ export class WebSocketHandler {
 
   handleConnection(ws, req) {
     const sessionId = this.extractSessionId(req.url);
+    console.log('WebSocket connection attempt for URL:', req.url);
+    console.log('Extracted session ID:', sessionId);
     
     if (!sessionId) {
       ws.close(1008, 'Session ID required');
       return;
     }
 
+    const session = this.sessionManager.getSession(sessionId);
+    if (!session) {
+      console.log('Session not found:', sessionId);
+      ws.close(1008, 'Session not found');
+      return;
+    }
+
+    console.log('WebSocket connected for session:', sessionId);
     this.connections.set(sessionId, ws);
 
     ws.on('message', async (message) => {
+      console.log('Received WebSocket message:', message.toString());
       try {
         const data = JSON.parse(message);
         await this.handleMessage(sessionId, data, ws);
       } catch (error) {
+        console.error('Error handling message:', error);
         ws.send(JSON.stringify({
           type: 'error',
           message: error.message
@@ -64,8 +76,10 @@ export class WebSocketHandler {
   }
 
   async handleMessage(sessionId, data, ws) {
+    console.log('Handling message type:', data.type, 'for session:', sessionId);
     switch (data.type) {
       case 'command':
+        console.log('Sending command to session:', data.command);
         this.sessionManager.sendCommand(sessionId, data.command);
         break;
       

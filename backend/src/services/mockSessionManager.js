@@ -35,14 +35,17 @@ export class MockSessionManager extends EventEmitter {
   }
 
   sendCommand(sessionId, command) {
+    console.log('MockSessionManager.sendCommand:', sessionId, command);
     const session = this.sessions.get(sessionId);
     if (!session) {
+      console.error('Session not found in sendCommand:', sessionId);
       throw new Error('Session not found');
     }
 
     session.lastActivity = new Date();
     
     // Echo the command
+    console.log('Emitting output for command:', command);
     this.emit('output', sessionId, command + '\n');
     
     // Simulate some responses

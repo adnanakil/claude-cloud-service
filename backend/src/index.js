@@ -16,12 +16,14 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Use mock session manager if Claude is not available
-const useMock = process.env.USE_MOCK === 'true' || process.env.NODE_ENV === 'development';
+const useMock = process.env.USE_MOCK === 'true';
 const sessionManager = useMock ? new MockSessionManager() : new SessionManager();
 const wsHandler = new WebSocketHandler(sessionManager);
 
 if (useMock) {
   console.log('Running in MOCK mode - Claude CLI not required');
+} else {
+  console.log('Running with real Claude CLI');
 }
 
 app.use(cors());

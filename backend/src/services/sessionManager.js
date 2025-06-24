@@ -38,21 +38,16 @@ export class SessionManager extends EventEmitter {
       HOME: sessionDir
     };
     
-    // Try different possible paths for claude
-    const claudePaths = ['/usr/local/bin/claude', '/usr/bin/claude', 'claude'];
-    let claudeCommand = 'claude';
+    // Use the claude command with the current directory mounted
+    const claudeCommand = '/usr/local/bin/claude';
+    const args = [
+      '--no-update-check',
+      process.cwd() // Pass the current working directory to Claude
+    ];
     
-    for (const path of claudePaths) {
-      try {
-        await fs.access(path);
-        claudeCommand = path;
-        break;
-      } catch (e) {
-        // Continue to next path
-      }
-    }
+    console.log(`Starting Claude session in ${sessionDir} with cwd: ${process.cwd()}`);
     
-    const pty = spawn(claudeCommand, ['--no-update-check'], {
+    const pty = spawn(claudeCommand, args, {
       name: 'xterm-color',
       cols: 80,
       rows: 30,

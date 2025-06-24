@@ -104,14 +104,8 @@ export class ClaudeApiManager extends EventEmitter {
       return;
     }
     
-    // For now, use a simple echo command to test
-    // In a real implementation, this would call the Claude API
+    // Use Claude in non-interactive print mode
     try {
-      // Create a temporary file with the command
-      const tempFile = path.join(session.cwd, 'temp_command.txt');
-      await fs.writeFile(tempFile, command);
-      
-      // Try to run claude with the command
       const env = {
         ...process.env,
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
@@ -120,8 +114,10 @@ export class ClaudeApiManager extends EventEmitter {
         NO_COLOR: '1'
       };
       
-      // Use echo to pipe the command to claude
-      const claudeProcess = spawn('sh', ['-c', `echo "${command.replace(/"/g, '\\"')}" | claude --no-update-check`], {
+      console.log(`Executing Claude with command: ${command}`);
+      
+      // Use claude --print for non-interactive mode
+      const claudeProcess = spawn('claude', ['--print', '--no-update-check', command], {
         cwd: session.cwd,
         env: env,
         stdio: ['pipe', 'pipe', 'pipe']
@@ -137,16 +133,22 @@ export class ClaudeApiManager extends EventEmitter {
       
       claudeProcess.stderr.on('data', (data) => {
         errorOutput += data.toString();
+        // Don't emit stderr immediately as it might contain progress info
       });
       
       claudeProcess.on('exit', (code) => {
         if (code !== 0 && errorOutput) {
+          console.error('Claude error output:', errorOutput);
           this.emit('output', sessionId, `Error: ${errorOutput}\n`);
         }
-        this.emit('output', sessionId, '> ');
+        if (output.length === 0 && code === 0) {
+          this.emit('output', sessionId, 'Claude returned no output.\n');
+        }
+        this.emit('output', sessionId, '\n> ');
       });
       
       claudeProcess.on('error', (error) => {
+        console.error('Claude process error:', error);
         this.emit('output', sessionId, `Error: ${error.message}\n`);
         this.emit('output', sessionId, '> ');
       });

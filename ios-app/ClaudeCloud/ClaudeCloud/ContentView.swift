@@ -199,9 +199,25 @@ class TerminalManager: ObservableObject {
         DispatchQueue.main.async {
             switch message.type {
             case "output":
-                self.output += message.data ?? ""
+                if let outputData = message.data {
+                    // Filter out ANSI escape sequences for cleaner display
+                    let cleanedOutput = outputData
+                        .replacingOccurrences(of: "\u{001B}[?25l", with: "") // Hide cursor
+                        .replacingOccurrences(of: "\u{001B}[?25h", with: "") // Show cursor
+                        .replacingOccurrences(of: "\u{001B}[?2004h", with: "") // Bracketed paste mode
+                        .replacingOccurrences(of: "\u{001B}[?2004l", with: "") // Bracketed paste mode off
+                        .replacingOccurrences(of: "\u{001B}[2J", with: "") // Clear screen
+                        .replacingOccurrences(of: "\u{001B}[3J", with: "") // Clear scrollback
+                        .replacingOccurrences(of: "\u{001B}[H", with: "") // Home cursor
+                    
+                    // Only append non-empty output after cleaning
+                    if !cleanedOutput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        self.output += cleanedOutput
+                    }
+                }
             case "connected":
                 self.output += "Connected to Claude Code session\n"
+                self.output += "Starting in project directory...\n\n"
             case "exit":
                 self.output += "\nSession ended\n"
                 self.isConnected = false

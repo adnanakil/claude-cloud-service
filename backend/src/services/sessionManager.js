@@ -44,8 +44,15 @@ export class SessionManager extends EventEmitter {
     // Check if project directory exists, use it as the starting directory
     const projectDir = process.env.PROJECTS_DIR ? 
       path.join(process.env.PROJECTS_DIR, 'claude-cloud-service') : null;
-    const startDir = projectDir && require('fs').existsSync(projectDir) ? 
-      projectDir : sessionDir;
+    let startDir = sessionDir;
+    try {
+      if (projectDir) {
+        await fs.access(projectDir);
+        startDir = projectDir;
+      }
+    } catch (error) {
+      // Project directory doesn't exist, use session directory
+    }
     
     const args = [
       startDir // Start Claude in project directory if available
@@ -71,7 +78,7 @@ export class SessionManager extends EventEmitter {
     } catch (spawnError) {
       console.error('Failed to spawn Claude with PTY:', spawnError);
       // Try without PTY as a fallback
-      const { exec } = require('child_process');
+      const { exec } = await import('child_process');
       const childProcess = exec(`${claudeCommand} ${args.join(' ')}`, {
         cwd: sessionDir,
         env: env

@@ -31,9 +31,22 @@ async function testConnection() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: 'test-user' })
     });
-    const session = await sessionRes.json();
-    sessionId = session.id;
-    console.log('Session created:', sessionId);
+    
+    console.log('Response status:', sessionRes.status);
+    console.log('Response headers:', sessionRes.headers.raw());
+    
+    const responseText = await sessionRes.text();
+    console.log('Raw response:', responseText);
+    
+    try {
+      const session = JSON.parse(responseText);
+      sessionId = session.id;
+      console.log('Session object:', session);
+      console.log('Session created:', sessionId);
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError.message);
+      return;
+    }
   } catch (error) {
     console.error('Session creation failed:', error.message);
     return;

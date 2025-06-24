@@ -27,15 +27,22 @@ export default function debugRouter() {
 
   router.get('/test-claude', async (req, res) => {
     try {
-      const { stdout, stderr } = await execAsync('claude --version');
+      const query = req.query.query || 'What is 2+2?';
+      const { stdout, stderr } = await execAsync(`claude --print "${query}"`, {
+        timeout: 15000,
+        env: process.env
+      });
       res.json({ 
-        version: stdout.trim(),
-        error: stderr
+        query,
+        response: stdout.trim(),
+        error: stderr,
+        hasApiKey: !!process.env.ANTHROPIC_API_KEY
       });
     } catch (error) {
       res.json({ 
         error: error.message,
-        command: 'claude --version'
+        command: `claude --print "${req.query.query || 'What is 2+2?'}"`,
+        hasApiKey: !!process.env.ANTHROPIC_API_KEY
       });
     }
   });

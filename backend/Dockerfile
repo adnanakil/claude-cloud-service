@@ -10,13 +10,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     ca-certificates \
     build-essential \
-    libutil-linux \
-    dumb-init \
     && rm -rf /var/lib/apt/lists/*
-
-# Ensure PTY support
-RUN mkdir -p /dev/pts && \
-    mount -t devpts devpts /dev/pts || true
 
 # Create a non-root user first
 RUN useradd -m -s /bin/bash claude-user

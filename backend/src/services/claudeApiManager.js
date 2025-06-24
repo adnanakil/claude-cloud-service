@@ -117,7 +117,7 @@ export class ClaudeApiManager extends EventEmitter {
       console.log(`Executing Claude with command: ${command}`);
       
       // Use claude --print for non-interactive mode
-      const claudeProcess = spawn('claude', ['--print', '--no-update-check', command], {
+      const claudeProcess = spawn('claude', ['--print', command], {
         cwd: session.cwd,
         env: env,
         stdio: ['pipe', 'pipe', 'pipe']

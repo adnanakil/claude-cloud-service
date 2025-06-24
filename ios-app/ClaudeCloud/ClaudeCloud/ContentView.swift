@@ -140,36 +140,17 @@ class TerminalManager: ObservableObject {
         // URLSession automatically handles WebSocket headers
         webSocketTask = session.webSocketTask(with: url)
         
-        // Send initial ping to test connection
-        webSocketTask?.sendPing { error in
-            if let error = error {
-                print("WebSocket ping failed: \(error)")
-                DispatchQueue.main.async {
-                    self.output += "\nFailed to connect: \(error.localizedDescription)\n"
-                    self.isConnected = false
-                }
-            } else {
-                print("WebSocket ping successful")
-                DispatchQueue.main.async {
-                    self.isConnected = true
-                }
-            }
-        }
-        
+        // Resume the task
         webSocketTask?.resume()
         
-        // Add a delay before starting to receive messages to ensure connection is established
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // Mark as connected and start receiving messages
+        DispatchQueue.main.async {
+            self.isConnected = true
             self.receiveMessage()
         }
     }
     
     private func receiveMessage() {
-        guard webSocketTask?.state == .running else {
-            print("WebSocket not in running state, current state: \(String(describing: webSocketTask?.state))")
-            return
-        }
-        
         webSocketTask?.receive { [weak self] result in
             switch result {
             case .success(let message):

@@ -37,15 +37,21 @@ COPY . .
 # Change ownership to claude-user
 RUN chown -R claude-user:claude-user /app
 
-# Create sessions directory
-RUN mkdir -p /app/sessions && chown -R claude-user:claude-user /app/sessions
+# Create sessions directory and projects directory
+RUN mkdir -p /app/sessions /app/projects && chown -R claude-user:claude-user /app/sessions /app/projects
 
 # Switch to non-root user
 USER claude-user
 
-# Set environment variable for sessions
+# Set environment variables
 ENV SESSIONS_DIR=/app/sessions
+ENV PROJECTS_DIR=/app/projects
 ENV PATH="/usr/local/bin:${PATH}"
+# Set git config for the user
+USER claude-user
+RUN git config --global user.email "claude@fly.io" && \
+    git config --global user.name "Claude Code"
+USER root
 
 # Copy test script
 COPY test-claude-auth.js /app/
@@ -53,12 +59,25 @@ COPY test-claude-auth.js /app/
 # Expose port
 EXPOSE 3000
 
-# Create startup script that tests Claude first
+# Create startup script that clones repo and tests Claude
 RUN echo '#!/bin/sh\n\
 echo "=== Container Starting ==="\n\
 echo "User: $(whoami)"\n\
 echo "PATH: $PATH"\n\
 echo "ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:+SET}"\n\
+\n\
+# Clone or update the repository\n\
+REPO_DIR="/app/projects/claude-cloud-service"\n\
+if [ -d "$REPO_DIR" ]; then\n\
+    echo "Repository exists, pulling latest changes..."\n\
+    cd "$REPO_DIR"\n\
+    git pull origin main || echo "Git pull failed, continuing..."\n\
+else\n\
+    echo "Cloning repository..."\n\
+    cd /app/projects\n\
+    git clone https://github.com/adnanakil/claude-cloud-service.git || echo "Git clone failed"\n\
+fi\n\
+\n\
 echo "Testing Claude..."\n\
 claude --version || echo "Claude version failed"\n\
 echo "Starting application..."\n\

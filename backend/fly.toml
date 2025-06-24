@@ -10,6 +10,7 @@ primary_region = "iad"
   PORT = "3000"
   SESSION_TYPE = "pty"
   SESSIONS_DIR = "/app/sessions"
+  PROJECTS_DIR = "/app/projects"
   NODE_ENV = "production"
 
 [http_service]

@@ -9,6 +9,7 @@ export class ClaudeSessionManager extends EventEmitter {
     super();
     this.sessions = new Map();
     this.sessionsDir = process.env.SESSIONS_DIR || '/tmp/claude-sessions';
+    this.projectsDir = process.env.PROJECTS_DIR || '/app/projects';
     this.initializeSessionsDir();
   }
 
@@ -45,7 +46,19 @@ export class ClaudeSessionManager extends EventEmitter {
     console.log(`Session Dir: ${sessionDir}`);
     console.log(`Environment PATH: ${env.PATH}`);
     console.log(`ANTHROPIC_API_KEY: ${env.ANTHROPIC_API_KEY ? 'SET (' + env.ANTHROPIC_API_KEY.substring(0, 10) + '...)' : 'NOT SET'}`);
-    console.log(`Command: claude ${sessionDir}`);
+    // Determine the working directory - use project directory if it exists
+    const projectDir = path.join(this.projectsDir, 'claude-cloud-service');
+    let workingDir = sessionDir;
+    
+    try {
+      await fs.access(projectDir);
+      workingDir = projectDir;
+      console.log(`Using project directory: ${projectDir}`);
+    } catch (error) {
+      console.log(`Project directory not found, using session directory: ${sessionDir}`);
+    }
+    
+    console.log(`Command: claude ${workingDir}`);
     
     // First check if claude exists
     const { execSync } = require('child_process');
@@ -69,8 +82,8 @@ export class ClaudeSessionManager extends EventEmitter {
     
     // Use spawn without PTY
     console.log('Spawning Claude process...');
-    const claudeProcess = spawn('claude', [sessionDir], {
-      cwd: sessionDir,
+    const claudeProcess = spawn('claude', [workingDir], {
+      cwd: workingDir,
       env: env,
       stdio: ['pipe', 'pipe', 'pipe']
     });

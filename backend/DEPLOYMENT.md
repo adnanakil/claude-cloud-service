@@ -151,3 +151,13 @@ The app is configured to:
 - Minimal memory allocation (512MB)
 
 This keeps costs low while maintaining good performance.
+
+## Mobile Development Support
+
+The deployment now includes full development environment support:
+- Automatic cloning of the GitHub repository
+- Claude Code sessions start in the project directory
+- Full access to edit and commit code from your mobile device
+- Git integration for version control
+
+See [MOBILE_DEVELOPMENT_GUIDE.md](./MOBILE_DEVELOPMENT_GUIDE.md) for detailed instructions on developing through your iPhone.

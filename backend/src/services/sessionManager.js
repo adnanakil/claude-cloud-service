@@ -48,13 +48,45 @@ export class SessionManager extends EventEmitter {
     console.log(`Starting Claude session in ${sessionDir}`);
     console.log(`Environment: ANTHROPIC_API_KEY=${env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'}`);
     
-    const pty = spawn(claudeCommand, args, {
-      name: 'xterm-color',
-      cols: 80,
-      rows: 30,
-      cwd: sessionDir,
-      env: env
-    });
+    let pty;
+    try {
+      // Try to spawn with different PTY settings
+      pty = spawn(claudeCommand, args, {
+        name: 'xterm-256color',
+        cols: 80,
+        rows: 24,
+        cwd: sessionDir,
+        env: {
+          ...env,
+          TERM: 'xterm-256color',
+          COLORTERM: 'truecolor'
+        }
+      });
+    } catch (spawnError) {
+      console.error('Failed to spawn Claude with PTY:', spawnError);
+      // Try without PTY as a fallback
+      const { exec } = require('child_process');
+      const childProcess = exec(`${claudeCommand} ${args.join(' ')}`, {
+        cwd: sessionDir,
+        env: env
+      });
+      
+      // Simulate PTY interface
+      pty = {
+        write: (data) => childProcess.stdin.write(data),
+        on: (event, handler) => {
+          if (event === 'data') {
+            childProcess.stdout.on('data', handler);
+            childProcess.stderr.on('data', handler);
+          } else if (event === 'exit') {
+            childProcess.on('exit', handler);
+          } else if (event === 'error') {
+            childProcess.on('error', handler);
+          }
+        },
+        kill: () => childProcess.kill()
+      };
+    }
     
     // Add error handling
     pty.on('error', (error) => {

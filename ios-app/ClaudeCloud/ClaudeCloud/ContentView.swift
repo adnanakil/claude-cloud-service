@@ -122,6 +122,13 @@ class TerminalManager: ObservableObject {
     }
     
     private func connectWebSocket(sessionId: String) {
+        // Use a custom URLSession configuration
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 300
+        
+        let session = URLSession(configuration: configuration)
+        
         let wsURL = "\(wsBaseURL)/ws/\(sessionId)"
         print("Attempting to connect to WebSocket URL: \(wsURL)")
         
@@ -131,9 +138,12 @@ class TerminalManager: ObservableObject {
         }
         
         var request = URLRequest(url: url)
-        request.timeoutInterval = 10
+        request.timeoutInterval = 30
+        request.setValue("websocket", forHTTPHeaderField: "Upgrade")
+        request.setValue("Upgrade", forHTTPHeaderField: "Connection")
+        request.setValue("13", forHTTPHeaderField: "Sec-WebSocket-Version")
         
-        webSocketTask = URLSession.shared.webSocketTask(with: request)
+        webSocketTask = session.webSocketTask(with: request)
         
         // Send initial ping to test connection
         webSocketTask?.sendPing { error in

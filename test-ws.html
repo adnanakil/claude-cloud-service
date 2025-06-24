@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <div id="status">Not connected</div>
+    <div id="messages"></div>
+    <input type="text" id="command" placeholder="Enter command">
+    <button onclick="sendCommand()">Send</button>
+    
+    <script>
+        let ws;
+        const sessionId = 'test-session';
+        
+        async function connect() {
+            // First create a session
+            const response = await fetch('https://claude-text-production.up.railway.app/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: 'test-user' })
+            });
+            
+            const session = await response.json();
+            console.log('Session created:', session);
+            
+            // Connect WebSocket
+            const wsUrl = `wss://claude-text-production.up.railway.app/ws/${session.id}`;
+            console.log('Connecting to:', wsUrl);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Connected';
+                console.log('WebSocket connected');
+            };
+            
+            ws.onmessage = (event) => {
+                console.log('Received:', event.data);
+                const messages = document.getElementById('messages');
+                messages.innerHTML += `<div>${event.data}</div>`;
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                document.getElementById('status').textContent = 'Error';
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('status').textContent = 'Disconnected';
+                console.log('WebSocket disconnected');
+            };
+        }
+        
+        function sendCommand() {
+            const input = document.getElementById('command');
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'command',
+                    command: input.value
+                }));
+                input.value = '';
+            }
+        }
+        
+        connect();
+    </script>
+</body>
+</html>

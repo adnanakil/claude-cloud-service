@@ -17,8 +17,10 @@ RUN useradd -m -s /bin/bash claude-user
 # Install Claude CLI globally via npm
 RUN npm install -g @anthropic-ai/claude-code
 
-# Verify installation
-RUN which claude && claude --version || echo "Claude CLI installed"
+# Verify installation and show where it's installed
+RUN which claude || echo "Claude not found in PATH"
+RUN ls -la /usr/local/lib/node_modules/ || echo "No global modules"
+RUN find /usr -name "claude" -type f 2>/dev/null || echo "Claude binary not found"
 
 WORKDIR /app
 

@@ -49,6 +49,52 @@ export default function debugRouter() {
     });
   });
 
+  // Test Claude directly
+  router.get('/test-claude-direct', async (req, res) => {
+    try {
+      const { spawn } = require('child_process');
+      const testProcess = spawn('claude', ['--print', 'Say hello'], {
+        env: process.env,
+        timeout: 10000
+      });
+      
+      let output = '';
+      let error = '';
+      
+      testProcess.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+      
+      testProcess.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+      
+      testProcess.on('exit', (code) => {
+        res.json({
+          success: code === 0,
+          code,
+          output,
+          error,
+          env: {
+            ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ? 'SET' : 'NOT SET'
+          }
+        });
+      });
+      
+      testProcess.on('error', (err) => {
+        res.json({
+          success: false,
+          error: err.message
+        });
+      });
+    } catch (error) {
+      res.json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
   // Comprehensive Claude diagnostics
   router.get('/claude-diagnostics', async (req, res) => {
     const results = {

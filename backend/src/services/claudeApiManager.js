@@ -68,8 +68,10 @@ export class ClaudeApiManager extends EventEmitter {
     // Echo the command
     this.emit('output', sessionId, `> ${command}\n`);
     
-    // Handle special commands
-    if (command.toLowerCase() === 'help') {
+    // Handle special commands (case-insensitive)
+    const lowerCommand = command.toLowerCase().trim();
+    
+    if (lowerCommand === 'help') {
       this.emit('output', sessionId, 'Available commands:\n');
       this.emit('output', sessionId, '  help     - Show this help message\n');
       this.emit('output', sessionId, '  clear    - Clear the screen\n');
@@ -80,13 +82,13 @@ export class ClaudeApiManager extends EventEmitter {
       return;
     }
     
-    if (command.toLowerCase() === 'clear') {
+    if (lowerCommand === 'clear') {
       this.emit('output', sessionId, '\x1b[2J\x1b[H');
       this.emit('output', sessionId, '> ');
       return;
     }
     
-    if (command.toLowerCase() === 'version') {
+    if (lowerCommand === 'version') {
       try {
         const version = execSync('claude --version', { encoding: 'utf8' }).trim();
         this.emit('output', sessionId, `${version}\n`);
@@ -97,7 +99,7 @@ export class ClaudeApiManager extends EventEmitter {
       return;
     }
     
-    if (command.toLowerCase() === 'exit') {
+    if (lowerCommand === 'exit') {
       this.emit('output', sessionId, 'Goodbye!\n');
       this.emit('exit', sessionId, 0);
       this.destroySession(sessionId);
@@ -130,6 +132,17 @@ export class ClaudeApiManager extends EventEmitter {
       
       let output = '';
       let errorOutput = '';
+      let processExited = false;
+      
+      // Set a timeout for Claude responses
+      const timeout = setTimeout(() => {
+        if (!processExited) {
+          console.log('Claude process timed out, killing it');
+          claudeProcess.kill();
+          this.emit('output', sessionId, '\nClaude is taking too long to respond. Please try again.\n');
+          this.emit('output', sessionId, '> ');
+        }
+      }, 30000); // 30 second timeout
       
       claudeProcess.stdout.on('data', (data) => {
         output += data.toString();
@@ -138,25 +151,34 @@ export class ClaudeApiManager extends EventEmitter {
       
       claudeProcess.stderr.on('data', (data) => {
         errorOutput += data.toString();
-        // Don't emit stderr immediately as it might contain progress info
+        console.log('Claude stderr:', data.toString());
       });
       
       claudeProcess.on('exit', (code) => {
+        processExited = true;
+        clearTimeout(timeout);
+        
         console.log(`Claude process exited with code: ${code}`);
         console.log(`Total output length: ${output.length}`);
         console.log(`Error output: ${errorOutput}`);
         
-        if (code !== 0 && errorOutput) {
-          console.error('Claude error output:', errorOutput);
-          this.emit('output', sessionId, `Error: ${errorOutput}\n`);
-        }
-        if (output.length === 0 && code === 0) {
+        if (code !== 0) {
+          if (errorOutput.includes('ANTHROPIC_API_KEY')) {
+            this.emit('output', sessionId, 'Error: Claude API key not configured properly.\n');
+          } else if (errorOutput) {
+            this.emit('output', sessionId, `Error: ${errorOutput}\n`);
+          } else {
+            this.emit('output', sessionId, `Error: Claude exited with code ${code}\n`);
+          }
+        } else if (output.length === 0) {
           this.emit('output', sessionId, 'Claude returned no output.\n');
         }
         this.emit('output', sessionId, '\n> ');
       });
       
       claudeProcess.on('error', (error) => {
+        processExited = true;
+        clearTimeout(timeout);
         console.error('Claude process error:', error);
         this.emit('output', sessionId, `Error: ${error.message}\n`);
         this.emit('output', sessionId, '> ');

@@ -137,13 +137,8 @@ class TerminalManager: ObservableObject {
             return
         }
         
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 30
-        request.setValue("websocket", forHTTPHeaderField: "Upgrade")
-        request.setValue("Upgrade", forHTTPHeaderField: "Connection")
-        request.setValue("13", forHTTPHeaderField: "Sec-WebSocket-Version")
-        
-        webSocketTask = session.webSocketTask(with: request)
+        // URLSession automatically handles WebSocket headers
+        webSocketTask = session.webSocketTask(with: url)
         
         // Send initial ping to test connection
         webSocketTask?.sendPing { error in
@@ -162,26 +157,48 @@ class TerminalManager: ObservableObject {
         }
         
         webSocketTask?.resume()
-        receiveMessage()
+        
+        // Add a delay before starting to receive messages to ensure connection is established
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.receiveMessage()
+        }
     }
     
     private func receiveMessage() {
+        guard webSocketTask?.state == .running else {
+            print("WebSocket not in running state, current state: \(String(describing: webSocketTask?.state))")
+            return
+        }
+        
         webSocketTask?.receive { [weak self] result in
             switch result {
             case .success(let message):
                 switch message {
                 case .string(let text):
                     self?.handleMessage(text)
-                default:
+                case .data(let data):
+                    if let text = String(data: data, encoding: .utf8) {
+                        self?.handleMessage(text)
+                    }
+                @unknown default:
                     break
                 }
+                // Continue receiving messages
                 self?.receiveMessage()
                 
             case .failure(let error):
                 print("WebSocket error: \(error)")
+                print("Error localized description: \(error.localizedDescription)")
+                
+                // Check if it's a specific error type
+                if let urlError = error as? URLError {
+                    print("URLError code: \(urlError.code)")
+                    print("URLError info: \(urlError.userInfo)")
+                }
+                
                 DispatchQueue.main.async {
                     self?.isConnected = false
-                    self?.output += "\nDisconnected from server\n"
+                    self?.output += "\nDisconnected from server: \(error.localizedDescription)\n"
                 }
             }
         }

@@ -7,6 +7,10 @@ export default function sessionRouter(sessionManager) {
     try {
       const { userId } = req.body;
       const session = await sessionManager.createSession(userId || 'anonymous');
+      
+      console.log('Session created via API:', session.id);
+      console.log('All sessions after creation:', sessionManager.getAllSessions().map(s => s.id));
+      
       res.json({
         id: session.id,
         userId: session.userId,

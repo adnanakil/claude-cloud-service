@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-# Install dependencies for node-pty and Claude Code
+# Install dependencies for node-pty
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
@@ -8,21 +8,20 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     wget \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user first
 RUN useradd -m -s /bin/bash claude-user
 
-# Install Claude CLI globally
-RUN curl -fsSL https://github.com/anthropics/claude-code/releases/latest/download/install.sh | bash && \
-    # Find where Claude was installed and copy to global location
-    find /root -name "claude" -type f -executable -exec cp {} /usr/local/bin/claude \; && \
-    chmod +x /usr/local/bin/claude && \
-    # Make it accessible to all users
+# For now, we'll use a placeholder for Claude CLI
+# In production, you would download the actual Claude binary
+RUN mkdir -p /usr/local/bin && \
+    echo '#!/bin/bash' > /usr/local/bin/claude && \
+    echo 'echo "Claude CLI placeholder - please install actual Claude CLI"' >> /usr/local/bin/claude && \
+    echo 'echo "Visit: https://github.com/anthropics/claude-code"' >> /usr/local/bin/claude && \
+    echo 'exit 1' >> /usr/local/bin/claude && \
     chmod 755 /usr/local/bin/claude
-
-# Test Claude installation
-RUN /usr/local/bin/claude --version || echo "Claude CLI installation needs API key to run"
 
 WORKDIR /app
 
@@ -46,6 +45,7 @@ USER claude-user
 
 # Set environment variable for sessions
 ENV SESSIONS_DIR=/app/sessions
+ENV PATH="/usr/local/bin:${PATH}"
 
 # Expose port
 EXPOSE 3000
